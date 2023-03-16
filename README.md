@@ -1,5 +1,3 @@
-# Chatrio-backend
-
 ## init
 ```
 pip install Flask, CORS
