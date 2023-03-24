@@ -1,0 +1,7 @@
+POST https://47.94.222.108:5000/api/login
+Content-Type: application/json
+
+{
+  "username": "1@1.com",
+  "password": "pw"
+}
