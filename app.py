@@ -1,13 +1,18 @@
 from flask_socketio import SocketIO, send
-
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+
 from utils import Mysql
 from models import User
+
+
 
 app = Flask(__name__)
 CORS(app) # 跨域
 app.config['SECRET_KEY'] = 'mysecretkey'
+app.config['JWT_SECRET_KEY'] = 'mysecretkey'
+jwt = JWTManager(app)
 socketio = SocketIO(app, cors_allowed_origins='*') # 允许所有源
 
 
@@ -24,7 +29,8 @@ def login():
     if a is not None:
         r = User(a)
         if r.password == password:
-            token = str(r.user_id)  # Replace this with a more secure token, such as JWT
+            # token = str(r.user_id)  # Replace this with a more secure token, such as JWT
+            token = create_access_token(identity=r.user_id)
             # print(token)
             # response = jsonify({'success': True, 'token': token})
             # print(response.json)
