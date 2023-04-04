@@ -1,12 +1,10 @@
-from flask_socketio import SocketIO, send
+from flask_socketio import SocketIO, send, join_room, leave_room,emit
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 from utils import Mysql
 from models import User
-
-
 
 app = Flask(__name__)
 CORS(app) # 跨域
@@ -35,7 +33,7 @@ def login():
             # response = jsonify({'success': True, 'token': token})
             # print(response.json)
             # print(response.json.get('token'))
-            return jsonify({'success': True, 'token': token}), 200
+            return jsonify({'success': True, 'token': token, 'username':r.user_name, 'email':r.email}), 200
     return jsonify({'success': False, 'message': 'Invalid username or password'}), 401
 
 
@@ -64,7 +62,20 @@ def signup():
 @socketio.on('message')
 def handleMessage(msg):
     print(f'Received message: {msg}')
+
     send(msg, broadcast=True)
+
+@socketio.on('fetch_chat_rooms')
+def handle_fetch_chat_rooms(data):
+    user_id = data['userId']
+
+    # Fetch chat rooms for the given user_id
+    # You might need to adjust the following line according to your database
+    chat_rooms = get_chat_rooms(user_id)
+
+    # Emit an event with the chat rooms
+    emit('chat_rooms', chat_rooms)
+
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000)
