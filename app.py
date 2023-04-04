@@ -64,7 +64,12 @@ def signup():
 @socketio.on('message')
 def handleMessage(msg):
     print(f'Received message: {msg}')
-
+    mysql = Mysql()
+    #TODO:roomid并没有获取
+    # 插入消息记录到数据库中
+    sql = "INSERT INTO chatrio.messages (room_id, content, user_id,time) VALUES ('{}', '{}', '{}',)".format(msg['roomId'], msg['content']['content'], msg['token'])
+    r3 = mysql.exe_db(sql)
+    print(r3)
     send(msg, broadcast=True)
 
 # 获取聊天室列表
@@ -75,25 +80,17 @@ def handle_get_room_list(data):
     user_id = data
     print(user_id)
     mysql = Mysql()
-    sql = "select user_name from users where user_id != '" + str(user_id) + "'"
-    
+    sql = "select user_name, user_id from users where user_id != '" + str(user_id) + "'"
     print(sql)
     a = mysql.fetch_all_db(sql)
+    # 再查找 room_user表, 找到所有当前user_id所在的room_id
+    # 查找 room表, 找到所有room_id对应的room_name和room_id
     print(a)
     emit('room_list', a)
 
+#TODO: 当点击某个聊天室时, 如果前端没有该聊天室的
 
 
-# @socketio.on('fetch_chat_rooms')
-# def handle_fetch_chat_rooms(data):
-#     user_id = data['userId']
-
-#     # Fetch chat rooms for the given user_id
-#     # You might need to adjust the following line according to your database
-#     chat_rooms = get_chat_rooms(user_id)
-
-#     # Emit an event with the chat rooms
-#     emit('chat_rooms', chat_rooms)
 
 
 if __name__ == '__main__':
