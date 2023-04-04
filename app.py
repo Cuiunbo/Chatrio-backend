@@ -1,5 +1,5 @@
 from flask_socketio import SocketIO, send, join_room, leave_room,emit
-from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity, decode_token
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from utils import Mysql
@@ -9,6 +9,8 @@ app = Flask(__name__)
 CORS(app) # 跨域
 app.config['SECRET_KEY'] = 'mysecretkey'
 app.config['JWT_SECRET_KEY'] = 'mysecretkey'
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = False
+
 jwt = JWTManager(app)
 socketio = SocketIO(app, cors_allowed_origins='*') # 允许所有源
 
@@ -26,8 +28,8 @@ def login():
     if a is not None:
         r = User(a)
         if r.password == password:
-            # token = str(r.user_id)  # Replace this with a more secure token, such as JWT
-            token = create_access_token(identity=r.user_id)
+            token = str(r.user_id)  # Replace this with a more secure token, such as JWT
+            # token = create_access_token(identity=r.user_id)
             # print(token)
             # response = jsonify({'success': True, 'token': token})
             # print(response.json)
@@ -68,14 +70,16 @@ def handleMessage(msg):
 # 获取聊天室列表
 @socketio.on('get_room_list')
 def handle_get_room_list(data):
-    User_id = data['userId']
-    # # print(user_id)
-    # mysql = Mysql()
-    # sql = "select * from users where user_id != '" + str(user_id) + "'"
-    # # print(sql)
-    # a = mysql.fetch_all_db(sql)
-    # # print(a)
-    # # Emit an event with the chat rooms
+    # print(data)
+    # decode = decode_token(data)
+    user_id = data
+    print(user_id)
+    mysql = Mysql()
+    sql = "select user_name from users where user_id != '" + str(user_id) + "'"
+    
+    print(sql)
+    a = mysql.fetch_all_db(sql)
+    print(a)
     emit('room_list', a)
 
 
