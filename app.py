@@ -64,7 +64,7 @@ def signup():
 
 # 消息发送
 @socketio.on('message')
-def handleMessage(msg):
+def handle_message(msg):
     print(f'Received message: {msg}')
 
     send(msg, broadcast=True)
@@ -72,16 +72,11 @@ def handleMessage(msg):
 
 # 获取聊天室列表
 @socketio.on('get_room_list')
-def handle_get_room_list(data):
-    print(data)
-    # decode = decode_token(data)
-    user_id = data
-    print(user_id)
+def handle_get_room_list(user_id):
     mysql = Mysql()
     sql = "select room_id, room_name,num_members from rooms where room_id=any(select room_id from room_user where user_id = " + user_id + ")"
 
     print(sql)
-
     a = mysql.fetch_all_db(sql)
     print(a)
     # 存成字典
