@@ -101,6 +101,7 @@ def handle_get_room_list(user_id):
             # roomname 就是 room_name
             roomname = i[1]
         result[roomid] = {'room_name': roomname, 'num_members': num_members}
+    print(result)
     emit('room_list', result)
 
 @socketio.on('get_all_history')
@@ -110,7 +111,9 @@ def handle_get_all_history(room_id):
 
     for i in room_id:
         print(i)
-        result = {}
+        result = {
+            'history' : [],
+        }
         try:
             sql = "select content, user_id，time from messages where room_id = " + str(i)
             print(sql)
@@ -120,8 +123,8 @@ def handle_get_all_history(room_id):
                 sql = "select user_name from users where user_id = " + str(j[1])
                 b = mysql.fetch_one_db(sql)
                 print(b)
-                result.push({'time':j[2], 'content': j[0], 'sender': b[0]})
-            # emit('room_history', a)
+                result['history'].push({'time':j[2], 'content': j[0], 'sender': b[0]})
+            emit('room_history', result)
         except Exception as e:
             print(f"An error occurred while querying messages for room {i}: {str(e)}")
     
