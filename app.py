@@ -115,7 +115,7 @@ def handle_get_all_history(room_id):
             'history' : [],
         }
         try:
-            sql = "select content, user_id，time from messages where room_id = " + str(i)
+            sql = "select content, user_id, time from messages where room_id = " + str(i)
             print(sql)
             a = mysql.fetch_all_db(sql)
             print(a)
@@ -123,8 +123,10 @@ def handle_get_all_history(room_id):
                 sql = "select user_name from users where user_id = " + str(j[1])
                 b = mysql.fetch_one_db(sql)
                 print(b)
-                result['history'].push({'time':j[2], 'content': j[0], 'sender': b[0]})
-            emit('room_history', result)
+                datatime = j[2].strftime("%Y-%m-%d %H:%M:%S")
+                result['history'].append({'time':datatime, 'content': j[0], 'sender': b[0]})
+            print(result)
+            emit('room_history', {'result': result, 'room_id': i})
         except Exception as e:
             print(f"An error occurred while querying messages for room {i}: {str(e)}")
     
