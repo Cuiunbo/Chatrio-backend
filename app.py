@@ -81,9 +81,33 @@ def handle_get_room_list(data):
     sql = "select room_id, room_name,num_members from rooms where room_id=any(select room_id from room_user where user_id = " + user_id + ")"
 
     print(sql)
+
     a = mysql.fetch_all_db(sql)
     print(a)
-    emit('room_list', a)
+    # 存成字典
+    result = {}
+    for i in a:
+        roomid = i[0]
+        num_members = i[2]
+        roomname = ''
+        if num_members == 2:
+           # sql 通过 room_user表获取另一个人的id
+            sql = "select user_id from room_user where room_id = " + str(roomid) + " and user_id != " + str(user_id)
+            print(sql)
+            b = mysql.fetch_one_db(sql)
+            print(b)
+            # 通过id获取另一个人的名字
+            sql = "select user_name from users where user_id = " + str(b[0])
+            print(sql)
+            c = mysql.fetch_one_db(sql)
+            print(c)
+            roomname = c[0]
+        else:
+            # roomname 就是 room_name
+            roomname = i[1]
+        result[roomid] = {'room_name': roomname, 'num_members': num_members}
+    # 通过获取到的num_members来判断是否是群聊
+    emit('room_list', result)
 
 
 # @socketio.on('fetch_chat_rooms')
