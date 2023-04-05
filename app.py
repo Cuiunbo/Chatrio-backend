@@ -103,17 +103,29 @@ def handle_get_room_list(user_id):
         result[roomid] = {'room_name': roomname, 'num_members': num_members}
     emit('room_list', result)
 
+@socketio.on('get_all_history')
+def handle_get_all_history(room_id):
+    print(room_id)
+    mysql = Mysql()
 
-# @socketio.on('fetch_chat_rooms')
-# def handle_fetch_chat_rooms(data):
-#     user_id = data['userId']
+    for i in room_id:
+        print(i)
+        result = {}
+        try:
+            sql = "select content, user_id，time from messages where room_id = " + str(i)
+            print(sql)
+            a = mysql.fetch_all_db(sql)
+            print(a)
+            for j in a:
+                sql = "select user_name from users where user_id = " + str(j[1])
+                b = mysql.fetch_one_db(sql)
+                print(b)
+                result.push({'time':j[2], 'content': j[0], 'sender': b[0]})
+            # emit('room_history', a)
+        except Exception as e:
+            print(f"An error occurred while querying messages for room {i}: {str(e)}")
+    
 
-#     # Fetch chat rooms for the given user_id
-#     # You might need to adjust the following line according to your database
-#     chat_rooms = get_chat_rooms(user_id)
-
-#     # Emit an event with the chat rooms
-#     emit('chat_rooms', chat_rooms)
 
 
 if __name__ == '__main__':
