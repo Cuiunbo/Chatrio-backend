@@ -101,7 +101,6 @@ def handle_get_room_list(user_id):
             # roomname 就是 room_name
             roomname = i[1]
         result[roomid] = {'room_name': roomname, 'num_members': num_members}
-    # 通过获取到的num_members来判断是否是群聊
     emit('room_list', result)
 
 
