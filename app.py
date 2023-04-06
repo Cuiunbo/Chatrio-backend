@@ -66,7 +66,12 @@ def signup():
 @socketio.on('message')
 def handle_message(msg):
     print(f'Received message: {msg}')
+    mysql = Mysql()
 
+    sql = "insert into messages (content, user_id, room_id, time) values ('" + msg['content']['content'] + "'," + str(msg['userId']) + "," + str(msg['roomId']) + ",now())"
+    print(sql)
+    a = mysql.exe_db(sql)
+    print(a)
     send(msg, broadcast=True)
 
 
@@ -75,10 +80,9 @@ def handle_message(msg):
 def handle_get_room_list(user_id):
     mysql = Mysql()
     sql = "select room_id, room_name,num_members from rooms where room_id=any(select room_id from room_user where user_id = " + user_id + ")"
-
-    print(sql)
+    # print(sql)
     a = mysql.fetch_all_db(sql)
-    print(a)
+    # print(a)
     # 存成字典
     result = {}
     for i in a:
@@ -88,48 +92,51 @@ def handle_get_room_list(user_id):
         if num_members == 2:
            # sql 通过 room_user表获取另一个人的id
             sql = "select user_id from room_user where room_id = " + str(roomid) + " and user_id != " + str(user_id)
-            print(sql)
+            # print(sql)
             b = mysql.fetch_one_db(sql)
-            print(b)
+            # print(b)
             # 通过id获取另一个人的名字
             sql = "select user_name from users where user_id = " + str(b[0])
-            print(sql)
+            # print(sql)
             c = mysql.fetch_one_db(sql)
-            print(c)
+            # print(c)
             roomname = c[0]
         else:
             # roomname 就是 room_name
             roomname = i[1]
         result[roomid] = {'room_name': roomname, 'num_members': num_members}
-    print(result)
+    # print(result)
     emit('room_list', result)
 
+#获取聊天室历史消息
 @socketio.on('get_all_history')
 def handle_get_all_history(room_id):
-    print(room_id)
+    # print(room_id)
     mysql = Mysql()
 
     for i in room_id:
-        print(i)
+        # print(i)
         result = {
             'history' : [],
         }
         try:
             sql = "select content, user_id, time from messages where room_id = " + str(i)
-            print(sql)
+            # print(sql)
             a = mysql.fetch_all_db(sql)
-            print(a)
+            # print(a)
             for j in a:
                 sql = "select user_name from users where user_id = " + str(j[1])
                 b = mysql.fetch_one_db(sql)
-                print(b)
-                datatime = j[2].strftime("%Y-%m-%d %H:%M:%S")
+                # print(b)
+                datatime = j[2].strftime("%Y/%m/%d %H:%M:%S")
                 result['history'].append({'time':datatime, 'content': j[0], 'sender': b[0]})
-            print(result)
+            # print(result)
             emit('room_history', {'result': result, 'room_id': i})
         except Exception as e:
             print(f"An error occurred while querying messages for room {i}: {str(e)}")
-    
+    emit('get_end', {'result': 'end'})
+# 加入聊天室
+
 
 
 
