@@ -62,6 +62,49 @@ def signup():
     return jsonify({'success': True}), 200
 
 
+@app.route('/api/addContact', methods=['POST'])
+def addContact():
+    data = request.json
+    print(data)
+    userid = data['username']
+    isGroup = data['content']['isGroup']
+    id = data['content']['id']
+    print(isGroup)
+    print(id)
+    mysql = Mysql()
+    if isGroup == '1':
+        sql = 'select room_id from rooms where room_id = ' + id
+        r = mysql.fetch_one_db(sql)
+        if r is None:
+            return jsonify({'success': False, 'message': 'Group does not exist!'}), 401
+        sql = 'select room_id from room_user where user_id = ' + userid + ' and room_id = ' + id
+        r = mysql.fetch_one_db(sql)
+        if r is not None:
+            return jsonify({'success': False, 'message': 'You are already in this group!'}), 401
+        sql = "insert into room_user (user_id, room_id) values(" + userid + ', ' + id + ')'
+        print(sql)
+        mysql.exe_db(sql)
+        sql = 'update rooms set num_members=num_members+1 where room_id = ' + id
+        mysql.exe_db(sql)
+        return jsonify({'success': True, 'message': 'Success!'}), 200
+    sql = 'select user_id from users where user_id = ' + id
+    r = mysql.fetch_one_db(sql)
+    if r is None:
+        return jsonify({'success': False, 'message': 'User does not exist!'}), 401
+    sql = 'select room_id from rooms where num_members=2 and room_id in (select room_id from room_user where user_id = ' + userid + ' or user_id = ' + id + ' group by room_id having count(*)=2)'
+    print(sql)
+    r = mysql.fetch_one_db(sql)
+    print(r)
+    if r is not None:
+        return jsonify({'success': False, 'message': 'Friend exists!'}), 401
+    print(sql)
+    sql = 'insert into room_user values (' + userid + ',@id,0), (' + id + ',@id,0)'
+    mysql.exe_db('insert into rooms values ()')
+    mysql.exe_db('set @id = @@identity')
+    mysql.exe_db(sql)
+    return jsonify({'success': True, 'message': 'Success!'}), 200
+
+
 # 消息发送
 @socketio.on('message')
 def handle_message(msg):
@@ -91,7 +134,7 @@ def handle_get_room_list(user_id):
         num_members = i[2]
         roomname = ''
         if num_members == 2:
-           # sql 通过 room_user表获取另一个人的id
+            # sql 通过 room_user表获取另一个人的id
             sql = "select user_id from room_user where room_id = " + str(roomid) + " and user_id != " + str(user_id)
             print(sql)
             b = mysql.fetch_one_db(sql)
@@ -125,7 +168,7 @@ def handle_get_all_history(room_id):
     for i in room_id:
         print(i)
         result = {
-            'history' : [],
+            'history': [],
         }
         try:
             sql = "select content, user_id, time from messages where room_id = " + str(i)
@@ -145,7 +188,6 @@ def handle_get_all_history(room_id):
     emit('get_end', {'result': 'end'})
     print('--------------------get_all_history---------------------')
 # 加入聊天室
-
 
 
 
