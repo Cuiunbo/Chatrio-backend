@@ -99,10 +99,32 @@ def addContact():
         return jsonify({'success': False, 'message': 'Friend exists!'}), 401
     print(sql)
     sql = 'insert into room_user values (' + userid + ',@id,0), (' + id + ',@id,0)'
+    sql1 = 'select @@identity'
     mysql.exe_db('insert into rooms values ()')
     mysql.exe_db('set @id = @@identity')
+    r = mysql.fetch_one_db(sql1)
+    print(r)
     mysql.exe_db(sql)
-    return jsonify({'success': True, 'message': 'Success!'}), 200
+    return jsonify({'success': True, 'message': 'Success!', 'room_id': r[0]}), 200
+
+
+@app.route('/api/createGroup', methods=['POST'])
+def createGroup():
+    data = request.json
+    user1 = data['username']
+    user2 = data['content']['id1']
+    user3 = data['content']['id2']
+    name = data['content']['name']
+    print(user1, user2, user3, name)
+    if user3 != user1 and user2 != user1 and user2 != user3:
+        mysql = Mysql()
+        sql = 'insert into rooms values ()'
+        mysql.exe_db(sql)
+        sql = 'select @@identity'
+        mysql.exe_db('set @id = @@identity')
+        sql='insert into room_user values (' + user1 + ',@id,1),(' + user2 + ',@id,0),(' + user3 + ',@id,0)'
+        mysql.exe_db(sql)
+        return jsonify({'success': True, 'message': 'Success!'}), 200
 
 
 # 消息发送
@@ -111,7 +133,8 @@ def handle_message(msg):
     print(f'Received message: {msg}')
     mysql = Mysql()
 
-    sql = "insert into messages (content, user_id, room_id, time) values ('" + msg['content']['content'] + "'," + str(msg['userId']) + "," + str(msg['roomId']) + ",now())"
+    sql = "insert into messages (content, user_id, room_id, time) values ('" + msg['content']['content'] + "'," + str(
+        msg['userId']) + "," + str(msg['roomId']) + ",now())"
     print(sql)
     a = mysql.exe_db(sql)
     print(a)
@@ -158,7 +181,8 @@ def handle_get_room_list(user_id):
     emit('room_list', result)
     print('--------------------get_room_list---------------------')
 
-#获取聊天室历史消息
+
+# 获取聊天室历史消息
 @socketio.on('get_all_history')
 def handle_get_all_history(room_id):
     print('--------------------get_all_history---------------------')
@@ -180,15 +204,16 @@ def handle_get_all_history(room_id):
                 b = mysql.fetch_one_db(sql)
                 print(b)
                 datatime = j[2].strftime("%Y/%m/%d %H:%M:%S")
-                result['history'].append({'time':datatime, 'content': j[0], 'sender': b[0]})
+                result['history'].append({'time': datatime, 'content': j[0], 'sender': b[0]})
             print(result)
             emit('room_history', {'result': result, 'room_id': i})
         except Exception as e:
             print(f"An error occurred while querying messages for room {i}: {str(e)}")
     emit('get_end', {'result': 'end'})
     print('--------------------get_all_history---------------------')
-# 加入聊天室
 
+
+# 加入聊天室
 
 
 if __name__ == '__main__':
