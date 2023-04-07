@@ -118,7 +118,7 @@ def createGroup():
     print(user1, user2, user3, name)
     if user3 != user1 and user2 != user1 and user2 != user3:
         mysql = Mysql()
-        sql = 'insert into rooms values (null, ' + name + "'3')"
+        sql = "insert into rooms values (null,'" + name +"' , 3)"
         mysql.exe_db(sql)
         sql = 'select @@identity'
         mysql.exe_db('set @id = @@identity')
