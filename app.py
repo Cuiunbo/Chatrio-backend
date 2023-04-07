@@ -125,6 +125,7 @@ def createGroup():
         sql='insert into room_user values (' + user1 + ',@id,1),(' + user2 + ',@id,0),(' + user3 + ',@id,0)'
         mysql.exe_db(sql)
         return jsonify({'success': True, 'message': 'Success!'}), 200
+    return jsonify({'success': False, 'message': 'No!'}), 401
 
 
 # 消息发送
