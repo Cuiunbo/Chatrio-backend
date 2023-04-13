@@ -51,26 +51,26 @@ def signup():
     r1 = mysql.fetch_one_db(sql1)
     r2 = mysql.fetch_one_db(sql2)
 
-    print(r1)
-    print(r2)
+    # print(r1)
+    # print(r2)
     if r1 is not None or r2 is not None:
         return jsonify({'success': False, 'message': 'Name or email has been occupied!'}), 401
     sql3 = "insert into chatrio.users (user_name, password, email) values ('" + username + "','" + password + "','" + email + "')"
-    print(sql3)
+    # print(sql3)
     r3 = mysql.exe_db(sql3)
-    print(r3)
+    # print(r3)
     return jsonify({'success': True}), 200
 
 
 @app.route('/api/addContact', methods=['POST'])
 def addContact():
     data = request.json
-    print(data)
+    # print(data)
     userid = data['username']
     isGroup = data['content']['isGroup']
     id = data['content']['id']
-    print(isGroup)
-    print(id)
+    # print(isGroup)
+    # print(id)
     mysql = Mysql()
     if isGroup == '1':
         sql = 'select room_id from rooms where room_id = ' + id
@@ -92,18 +92,18 @@ def addContact():
     if r is None:
         return jsonify({'success': False, 'message': 'User does not exist!'}), 401
     sql = 'select room_id from rooms where num_members=2 and room_id in (select room_id from room_user where user_id = ' + userid + ' or user_id = ' + id + ' group by room_id having count(*)=2)'
-    print(sql)
+    # print(sql)
     r = mysql.fetch_one_db(sql)
-    print(r)
+    # print(r)
     if r is not None:
         return jsonify({'success': False, 'message': 'Friend exists!'}), 401
-    print(sql)
+    # print(sql)
     sql = 'insert into room_user values (' + userid + ',@id,0), (' + id + ',@id,0)'
     sql1 = 'select @@identity'
     mysql.exe_db('insert into rooms values ()')
     mysql.exe_db('set @id = @@identity')
     r = mysql.fetch_one_db(sql1)
-    print(r)
+    # print(r)
     mysql.exe_db(sql)
     return jsonify({'success': True, 'message': 'Success!', 'room_id': r[0]}), 200
 
@@ -115,7 +115,7 @@ def createGroup():
     user2 = data['content']['id1']
     user3 = data['content']['id2']
     name = data['content']['name']
-    print(user1, user2, user3, name)
+    # print(user1, user2, user3, name)
     if user3 != user1 and user2 != user1 and user2 != user3:
         mysql = Mysql()
         sql = "insert into rooms values (null,'" + name +"' , 3)"
@@ -134,14 +134,14 @@ def createGroup():
 # 消息发送
 @socketio.on('message')
 def handle_message(msg):
-    print(f'Received message: {msg}')
+    # print(f'Received message: {msg}')
     mysql = Mysql()
 
     sql = "insert into messages (content, user_id, room_id, time) values ('" + msg['content']['content'] + "'," + str(
         msg['userId']) + "," + str(msg['roomId']) + ",now())"
-    print(sql)
+    # print(sql)
     a = mysql.exe_db(sql)
-    print(a)
+    # print(a)
     send(msg, broadcast=True)
 
 
@@ -151,9 +151,9 @@ def handle_get_room_list(user_id):
     print('--------------------get_room_list---------------------')
     mysql = Mysql()
     sql = "select room_id, room_name,num_members from rooms where room_id=any(select room_id from room_user where user_id = " + user_id + ")"
-    print(sql)
+    # print(sql)
     a = mysql.fetch_all_db(sql)
-    print(a)
+    # print(a)
     # 存成字典
     result = {}
     for i in a:
@@ -163,17 +163,17 @@ def handle_get_room_list(user_id):
         if num_members == 2:
             # sql 通过 room_user表获取另一个人的id
             sql = "select user_id from room_user where room_id = " + str(roomid) + " and user_id != " + str(user_id)
-            print(sql)
+            # print(sql)
             b = mysql.fetch_one_db(sql)
             # 容错处理
             if b is None:
                 continue
-            print(b)
+            # print(b)
             # 通过id获取另一个人的名字
             sql = "select user_name from users where user_id = " + str(b[0])
-            print(sql)
+            # print(sql)
             c = mysql.fetch_one_db(sql)
-            print(c)
+            # print(c)
             if c is None:
                 continue
             roomname = c[0]
@@ -181,7 +181,7 @@ def handle_get_room_list(user_id):
             # roomname 就是 room_name
             roomname = i[1]
         result[roomid] = {'room_name': roomname, 'num_members': num_members}
-    print(result)
+    # print(result)
     emit('room_list', result)
     print('--------------------get_room_list---------------------')
 
@@ -190,26 +190,26 @@ def handle_get_room_list(user_id):
 @socketio.on('get_all_history')
 def handle_get_all_history(room_id):
     print('--------------------get_all_history---------------------')
-    print(room_id)
+    # print(room_id)
     mysql = Mysql()
 
     for i in room_id:
-        print(i)
+        # print(i)
         result = {
             'history': [],
         }
         try:
             sql = "select content, user_id, time from messages where room_id = " + str(i)
-            print(sql)
+            # print(sql)
             a = mysql.fetch_all_db(sql)
-            print(a)
+            # print(a)
             for j in a:
                 sql = "select user_name from users where user_id = " + str(j[1])
                 b = mysql.fetch_one_db(sql)
-                print(b)
+                # print(b)
                 datatime = j[2].strftime("%Y/%m/%d %H:%M:%S")
                 result['history'].append({'time': datatime, 'content': j[0], 'sender': b[0]})
-            print(result)
+            # print(result)
             emit('room_history', {'result': result, 'room_id': i})
         except Exception as e:
             print(f"An error occurred while querying messages for room {i}: {str(e)}")
